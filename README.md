@@ -1,4 +1,4 @@
-# HRV theme UI Gen Tool
+# Theme UI Gen Tool
 
 ### Install it and run:
 
