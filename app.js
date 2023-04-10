@@ -8,7 +8,7 @@ var favicon = require('serve-favicon');
 var expressLayouts = require('express-ejs-layouts');
 
 var app = express();
-app.use(favicon(path.join(__dirname, 'public', '/imgs/favicon.ico')));
+app.use(favicon(path.join(__dirname, 'public', '/images/favicon.ico')));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

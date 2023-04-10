@@ -6,11 +6,19 @@
     <title>Axies</title>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
-  <body>
-    <%- include('../partials/header.ejs') %>
-    <main><%- body %></main>
-    <%- include('../partials/footer.ejs') %>
-
+  <body class="body header-fixed is_dark">
+    <!-- preloade -->
+    <div class="preload preload-container">
+      <div class="preload-logo"></div>
+    </div>
+    <!-- /preload -->
+    <div id="wrapper">
+      <div id="page" class="clearfix">
+        <%- include('../partials/header.ejs') %>
+        <main><%- body %></main>
+        <%- include('../partials/footer.ejs') %>
+      </div>
+    </div>
     <a id="scroll-top"></a>
 
     <!-- Javascript -->
