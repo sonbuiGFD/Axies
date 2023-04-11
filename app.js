@@ -4,6 +4,7 @@ var cookieParser = require('cookie-parser');
 var favicon = require('serve-favicon');
 var expressLayouts = require('express-ejs-layouts');
 
+const PORT = process.env.PORT || 3000;
 var app = express();
 app.use(favicon(path.join(__dirname, 'public', '/images/favicon.ico')));
 
@@ -27,7 +28,7 @@ app.get('/:page', function (req, res) {
   res.render('pages/' + req.params.page);
 });
 
-app.listen(3000, function () {
+app.listen(PORT, function () {
   console.log('Example app listening on port 3000!\n');
 });
 
