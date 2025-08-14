@@ -78,7 +78,7 @@ app.post('/wisekingson', cors(corsOptions), async function (req, res) {
   console.log('Request Headers:', req.headers);
 
   try {
-    const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbx6COqY-TxvyunVFMsKuQpIxtqCjpOgasTijl5NIYGrSlyJQIVd7jL852dydRQRGkdl/exec';
+    const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzvS8AChPke-j19PtP4IElR3cyk7SXd4cpYFol-i7DEwoTff0f9F0QXDvk8WkGBnDVx/exec';
 
     console.log('Making request to Google Apps Script:', googleScriptUrl);
     console.log('Request payload:', JSON.stringify(req.body, null, 2));
