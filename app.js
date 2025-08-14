@@ -47,39 +47,56 @@ const corsOptions = {
 
 // Handle OPTIONS preflight request for CORS
 app.options('/wisekingson', cors(corsOptions), (req, res) => {
+  console.log('=== PREFLIGHT OPTIONS REQUEST ===');
+  console.log('Origin:', req.headers.origin);
+  console.log('Method:', req.method);
+  console.log('Request Headers:', req.headers);
+
   // Set CORS headers explicitly for preflight
   res.header('Access-Control-Allow-Origin', req.headers.origin || 'https://wisekingson-straps.com');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.header('Access-Control-Max-Age', '86400');
+
+  console.log('Response Headers Set:', res.getHeaders());
+  console.log('=== PREFLIGHT RESPONSE SENT ===');
+
   res.status(200).end();
 });
 
 // Proxy route for Google Apps Script API
 app.post('/wisekingson', cors(corsOptions), async function (req, res) {
   // Log CORS headers for debugging
+  console.log('=== PROXY REQUEST START ===');
   console.log('CORS Headers:', {
     origin: req.headers.origin,
     method: req.method,
     'user-agent': req.headers['user-agent'],
   });
-  try {
-    // Google Apps Script URL - replace with your actual script URL
-    const googleScriptUrl = process.env.GOOGLE_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbx6COqY-TxvyunVFMsKuQpIxtqCjpOgasTijl5NIYGrSlyJQIVd7jL852dydRQRGkdl/exec';
+  console.log('Request Body:', JSON.stringify(req.body, null, 2));
+  console.log('Request Headers:', req.headers);
 
-    // Forward query parameters from the request
-    const queryParams = new URLSearchParams(req.query).toString();
-    const fullUrl = queryParams ? `${googleScriptUrl}?${queryParams}` : googleScriptUrl;
+  try {
+    const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbx6COqY-TxvyunVFMsKuQpIxtqCjpOgasTijl5NIYGrSlyJQIVd7jL852dydRQRGkdl/exec';
+
+    console.log('Making request to Google Apps Script:', googleScriptUrl);
+    console.log('Request payload:', JSON.stringify(req.body, null, 2));
 
     // Make request to Google Apps Script
-    const response = await axios.post(fullUrl, req.body, {
+    const response = await axios.post(googleScriptUrl, req.body, {
       timeout: 10000, // 10 second timeout
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
     });
+
+    console.log('=== GOOGLE APPS SCRIPT RESPONSE ===');
+    console.log('Response Status:', response.status);
+    console.log('Response Headers:', response.headers);
+    console.log('Response Data:', JSON.stringify(response.data, null, 2));
+    console.log('Response Size:', JSON.stringify(response.data).length, 'characters');
 
     // Set CORS headers explicitly
     res.header('Access-Control-Allow-Origin', req.headers.origin || 'https://wisekingson-straps.com');
@@ -88,30 +105,70 @@ app.post('/wisekingson', cors(corsOptions), async function (req, res) {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
     // Forward the response from Google Apps Script
-    res.status(response.status).json(response.data);
-  } catch (error) {
-    console.error('Proxy error:', error.message);
+    console.log('=== SENDING RESPONSE TO CLIENT ===');
+    console.log('Final Response Status:', response.status);
+    console.log('Final Response Headers:', res.getHeaders());
 
-    if (error.code === 'ECONNABORTED') {
-      return res.status(504).json({
-        error: 'Gateway Timeout',
-        message: 'Request to Google Apps Script timed out',
-      });
+    res.status(response.status).json(response.data);
+
+    console.log('=== PROXY REQUEST COMPLETED SUCCESSFULLY ===');
+  } catch (error) {
+    console.log('=== PROXY ERROR OCCURRED ===');
+    console.error('Error Type:', error.constructor.name);
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+
+    if (error.code) {
+      console.error('Error Code:', error.code);
     }
 
     if (error.response) {
+      console.error('=== GOOGLE APPS SCRIPT ERROR RESPONSE ===');
+      console.error('Error Status:', error.response.status);
+      console.error('Error Headers:', error.response.headers);
+      console.error('Error Data:', JSON.stringify(error.response.data, null, 2));
+
       // Forward error response from Google Apps Script
       return res.status(error.response.status).json({
         error: 'Proxy Error',
         message: error.response.data || 'Error from Google Apps Script',
         status: error.response.status,
+        timestamp: new Date().toISOString(),
+        requestId: Date.now(),
+      });
+    }
+
+    if (error.code === 'ECONNABORTED') {
+      console.error('=== TIMEOUT ERROR ===');
+      console.error('Request timed out after 10 seconds');
+      return res.status(504).json({
+        error: 'Gateway Timeout',
+        message: 'Request to Google Apps Script timed out',
+        timestamp: new Date().toISOString(),
+        requestId: Date.now(),
+      });
+    }
+
+    if (error.code === 'ENOTFOUND') {
+      console.error('=== DNS ERROR ===');
+      console.error('Could not resolve hostname');
+      return res.status(502).json({
+        error: 'Bad Gateway',
+        message: 'Could not connect to Google Apps Script',
+        timestamp: new Date().toISOString(),
+        requestId: Date.now(),
       });
     }
 
     // Generic error response
+    console.error('=== UNKNOWN ERROR ===');
+    console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to proxy request to Google Apps Script',
+      timestamp: new Date().toISOString(),
+      requestId: Date.now(),
     });
   }
 });
