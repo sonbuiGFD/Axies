@@ -25,15 +25,45 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // CORS configuration for proxy route only
 const corsOptions = {
-  origin: ['https://wisekingson.com', 'https://wisekingson-straps.com'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = ['https://wisekingson.com', 'https://wisekingson-straps.com'];
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
   optionsSuccessStatus: 200,
+  preflightContinue: false,
+  maxAge: 86400, // Cache preflight for 24 hours
 };
+
+// Handle OPTIONS preflight request for CORS
+app.options('/wisekingson', cors(corsOptions), (req, res) => {
+  // Set CORS headers explicitly for preflight
+  res.header('Access-Control-Allow-Origin', req.headers.origin || 'https://wisekingson-straps.com');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('Access-Control-Max-Age', '86400');
+  res.status(200).end();
+});
 
 // Proxy route for Google Apps Script API
 app.post('/wisekingson', cors(corsOptions), async function (req, res) {
+  // Log CORS headers for debugging
+  console.log('CORS Headers:', {
+    origin: req.headers.origin,
+    method: req.method,
+    'user-agent': req.headers['user-agent'],
+  });
   try {
     // Google Apps Script URL - replace with your actual script URL
     const googleScriptUrl = process.env.GOOGLE_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbx6COqY-TxvyunVFMsKuQpIxtqCjpOgasTijl5NIYGrSlyJQIVd7jL852dydRQRGkdl/exec';
@@ -50,6 +80,12 @@ app.post('/wisekingson', cors(corsOptions), async function (req, res) {
         'Content-Type': 'application/json',
       },
     });
+
+    // Set CORS headers explicitly
+    res.header('Access-Control-Allow-Origin', req.headers.origin || 'https://wisekingson-straps.com');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
     // Forward the response from Google Apps Script
     res.status(response.status).json(response.data);
