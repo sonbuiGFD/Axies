@@ -47,11 +47,6 @@ const corsOptions = {
 
 // Handle OPTIONS preflight request for CORS
 app.options('/wisekingson', cors(corsOptions), (req, res) => {
-  console.log('=== PREFLIGHT OPTIONS REQUEST ===');
-  console.log('Origin:', req.headers.origin);
-  console.log('Method:', req.method);
-  console.log('Request Headers:', req.headers);
-
   // Set CORS headers explicitly for preflight
   res.header('Access-Control-Allow-Origin', req.headers.origin || 'https://wisekingson-straps.com');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -59,29 +54,13 @@ app.options('/wisekingson', cors(corsOptions), (req, res) => {
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.header('Access-Control-Max-Age', '86400');
 
-  console.log('Response Headers Set:', res.getHeaders());
-  console.log('=== PREFLIGHT RESPONSE SENT ===');
-
   res.status(200).end();
 });
 
 // Proxy route for Google Apps Script API
 app.post('/wisekingson', cors(corsOptions), async function (req, res) {
-  // Log CORS headers for debugging
-  console.log('=== PROXY REQUEST START ===');
-  console.log('CORS Headers:', {
-    origin: req.headers.origin,
-    method: req.method,
-    'user-agent': req.headers['user-agent'],
-  });
-  console.log('Request Body:', JSON.stringify(req.body, null, 2));
-  console.log('Request Headers:', req.headers);
-
   try {
-    const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbzvS8AChPke-j19PtP4IElR3cyk7SXd4cpYFol-i7DEwoTff0f9F0QXDvk8WkGBnDVx/exec';
-
-    console.log('Making request to Google Apps Script:', googleScriptUrl);
-    console.log('Request payload:', JSON.stringify(req.body, null, 2));
+    const googleScriptUrl = 'https://script.google.com/macros/s/AKfycbyabOrGM0dHMPJLF-oFyFlenaw_x9BLu6ydtbPJftiWv8yEqdR1tHHOvxrjjLtvDlyv/exec';
 
     // Make request to Google Apps Script
     const response = await axios.post(googleScriptUrl, req.body, {
@@ -92,12 +71,6 @@ app.post('/wisekingson', cors(corsOptions), async function (req, res) {
       },
     });
 
-    console.log('=== GOOGLE APPS SCRIPT RESPONSE ===');
-    console.log('Response Status:', response.status);
-    console.log('Response Headers:', response.headers);
-    console.log('Response Data:', JSON.stringify(response.data, null, 2));
-    console.log('Response Size:', JSON.stringify(response.data).length, 'characters');
-
     // Set CORS headers explicitly
     res.header('Access-Control-Allow-Origin', req.headers.origin || 'https://wisekingson-straps.com');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -105,13 +78,7 @@ app.post('/wisekingson', cors(corsOptions), async function (req, res) {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
     // Forward the response from Google Apps Script
-    console.log('=== SENDING RESPONSE TO CLIENT ===');
-    console.log('Final Response Status:', response.status);
-    console.log('Final Response Headers:', res.getHeaders());
-
     res.status(response.status).json(response.data);
-
-    console.log('=== PROXY REQUEST COMPLETED SUCCESSFULLY ===');
   } catch (error) {
     console.log('=== PROXY ERROR OCCURRED ===');
     console.error('Error Type:', error.constructor.name);
